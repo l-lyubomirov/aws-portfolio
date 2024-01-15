@@ -9,3 +9,31 @@ resource "aws_instance" "bastion-host" {
     Name = "bastion-host"
   }
 }
+
+resource "aws_iam_instance_profile" "profile-ec2-iam-bastion" {
+  name = "ec2-profile-bastion"
+  role = aws_iam_role.iam-role-ssm-bastion.name
+}
+
+resource "aws_iam_role" "iam-role-ssm-bastion" {
+  name        = "ssm-iam-role-bastion"
+  description = "The role for the developer resources EC2"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Sid    = ""
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ssm-role-policy-attach-bastion" {
+  role       = aws_iam_role.iam-role-ssm-bastion.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
