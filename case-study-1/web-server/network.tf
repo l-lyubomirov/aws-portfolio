@@ -175,3 +175,54 @@ resource "aws_network_acl" "nacl-cl" {
     to_port    = 0
   }
 }
+
+resource "aws_flow_log" "flow-logs" {
+  iam_role_arn    = aws_iam_role.role-flowlogs.arn
+  log_destination = aws_cloudwatch_log_group.cw-log-gr.arn
+  traffic_type    = "ALL"
+  vpc_id          = aws_vpc.vpc-cl.id
+}
+
+resource "aws_cloudwatch_log_group" "cw-log-gr" {
+  name = "Clowdwatch-log-group"
+}
+
+resource "aws_iam_role" "role-flowlogs" {
+  name = "Flowlogs-role"
+  assume_role_policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Sid" : "",
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "vpc-flow-logs.amazonaws.com"
+        },
+        "Action" : "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "policy-flowlogs" {
+  name = "Policy-flowlogs"
+  role = aws_iam_role.role-flowlogs.id
+
+  policy = jsonencode({
+
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Action" : [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogGroups",
+          "logs:DescribeLogStreams"
+        ],
+        "Effect" : "Allow",
+        "Resource" : "*"
+      }
+    ]
+  })
+}
