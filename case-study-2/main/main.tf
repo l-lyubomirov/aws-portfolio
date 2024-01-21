@@ -17,3 +17,27 @@ module "module-vpc" {
   flowlog-policy-role              = templatefile("${path.module}/policies/assume-policy-flowlogs-role.json", {})
   flow-log-polices                 = templatefile("${path.module}/policies/flow-log-policies.json", {})
 }
+
+module "module-web-server" {
+  source                     = "../modules/module-web-server"
+  ec2-bastion-config         = var.ec2-bastion-config
+  health-check-alb           = var.health-check-alb
+  webserver-instance-type    = var.webserver-instance-type
+  asg-config                 = var.asg-config
+  ami-webserver              = var.ami-webserver
+  project-name               = var.project-name
+  vpc-id                     = module.module-vpc.vpc-id
+  public-subnet1-id          = module.module-vpc.public-subnet1-id
+  public-subnet2-id          = module.module-vpc.public-subnet2-id
+  security-group1-id         = module.module-vpc.security-group1-id
+  webserver-securitygroup-id = module.module-vpc.webserver-securitygroup-id
+  ngw-id                     = module.module-vpc.ngw-id
+  private-subnet-id          = module.module-vpc.private-subnet-id
+  depends_on                 = [module.module-vpc]
+  alb-config                 = var.alb-config
+  alb-listener-config        = var.alb-listener-config
+  alb-tg-config              = var.alb-tg-config
+  assume-policy-role         = templatefile("${path.module}/policies/assume-policy.json", {})
+  s3-policy                  = templatefile("${path.module}/policies/s3getobj-policy.json", {})
+  user-data                  = filebase64("${path.module}/scripts/apache-userdata.sh")
+}
